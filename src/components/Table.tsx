@@ -1,11 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { ChangeEvent, FormEvent } from "react";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import { DataGrid, GridToolbar } from "@mui/x-data-grid";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 import AddIcon from "@mui/icons-material/Add";
 import SearchIcon from "@mui/icons-material/Search";
-
 import Person2OutlinedIcon from "@mui/icons-material/Person2Outlined";
 
 import {
@@ -48,16 +47,30 @@ const theme = createTheme({
     },
   },
 });
+interface Student {
+  id: number;
+  name: string;
+  sex: string;
+  dob: string;
+  groups: string;
+}
 
 function Table() {
-  const [data, setData] = useState([]);
-  const [filteredData, setFilteredData] = useState([]);
-  const [selectedRow, setSelectedRow] = useState(null);
-  const [openConfirmation, setOpenConfirmation] = useState(false);
-  const [searchText, setSearchText] = useState("");
-  const [selectedGroups, setSelectedGroups] = useState([]);
+  const [data, setData] = React.useState<Student[]>([]);
+  const [filteredData, setFilteredData] = React.useState<Student[]>([]);
+  const [selectedRow, setSelectedRow] = React.useState<Student | null>(null);
+  const [openConfirmation, setOpenConfirmation] = React.useState(false);
+  const [searchText, setSearchText] = React.useState("");
+  const [selectedGroups, setSelectedGroups] = React.useState<string[]>([]);
+  const [openModal, setOpenModal] = React.useState(false);
+  const [openEditModal, setOpenEditModal] = React.useState(false);
+  const [name, setName] = React.useState("");
+  const [sex, setSex] = React.useState("");
+  const [dateOfBirth, setDateOfBirth] = React.useState("");
+  const [group, setGroup] = React.useState("");
+  const [editRowId, setEditRowId] = React.useState<number | null>(null);
 
-  const handleGroupChange = (event) => {
+  const handleGroupChange = (event: ChangeEvent<HTMLInputElement>) => {
     const groupName = event.target.value;
     if (event.target.checked) {
       setSelectedGroups((prevGroups) => [...prevGroups, groupName]);
@@ -68,15 +81,16 @@ function Table() {
     }
   };
 
-  useEffect(() => {
+  React.useEffect(() => {
     fetch("http://localhost:3001/users")
       .then((response) => response.json())
-      .then((data) => {
+      .then((data: Student[]) => {
         setData(data);
         setFilteredData(data);
       });
   }, []);
-  useEffect(() => {
+
+  React.useEffect(() => {
     const filteredRows = data.filter(
       (row) =>
         row.name.toLowerCase().includes(searchText.toLowerCase()) &&
@@ -84,22 +98,23 @@ function Table() {
     );
     setFilteredData(filteredRows);
   }, [data, searchText, selectedGroups]);
-  const handleSearch = (event) => {
+
+  const handleSearch = (event: ChangeEvent<HTMLInputElement>) => {
     setSearchText(event.target.value);
   };
 
-  const handleDeleteClick = (row) => {
+  const handleDeleteClick = (row: Student) => {
     setSelectedRow(row);
     setOpenConfirmation(true);
   };
 
   const handleDeleteConfirm = () => {
-    fetch(`http://localhost:3001/users/${selectedRow.id}`, {
+    fetch(`http://localhost:3001/users/${selectedRow!.id}`, {
       method: "DELETE",
     })
       .then(() => {
         setData((prevData) =>
-          prevData.filter((row) => row.id !== selectedRow.id)
+          prevData.filter((row) => row.id !== selectedRow!.id)
         );
         setSelectedRow(null);
         setOpenConfirmation(false);
@@ -127,7 +142,7 @@ function Table() {
       field: "delete",
       headerName: "",
       width: 80,
-      renderCell: (params) => (
+      renderCell: (params: { row: Student }) => (
         <DeleteIcon
           style={{ color: "red", cursor: "pointer" }}
           onClick={() => handleDeleteClick(params.row)}
@@ -138,7 +153,7 @@ function Table() {
       field: "edit",
       headerName: "",
       width: 80,
-      renderCell: (params) => (
+      renderCell: (params: { row: Student }) => (
         <EditIcon
           style={{ color: "blue", cursor: "pointer" }}
           onClick={() => handleEditClick(params.row)}
@@ -146,38 +161,41 @@ function Table() {
       ),
     },
   ];
-  const [openModal, setOpenModal] = useState(false);
-  const [openEditModal, setOpenEditModal] = useState(false);
-  const [name, setName] = useState("");
-  const [sex, setSex] = useState("");
-  const [dateOfBirth, setDateOfBirth] = useState("");
-  const [group, setGroup] = useState("");
-  const [editRowId, setEditRowId] = useState(null);
 
   const handleCloseEditModal = () => {
     setOpenEditModal(false);
+    setName("");
+    setSex("");
+    setDateOfBirth("");
+    setGroup("");
   };
+
   const handleOpenEditModal = () => {
     setOpenEditModal(true);
   };
+
   const handleOpenModal = () => {
     setOpenModal(true);
   };
 
   const handleCloseModal = () => {
     setOpenModal(false);
+    setName("");
+    setSex("");
+    setDateOfBirth("");
+    setGroup("");
   };
-  const handleSubmit = (event) => {
+
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    const newStudent = {
+    const newStudent: Student = {
       id: Math.random(),
       name,
       sex,
       dob: dateOfBirth,
       groups: group,
     };
-    console.log(newStudent);
 
     fetch("http://localhost:3001/users", {
       method: "POST",
@@ -187,20 +205,16 @@ function Table() {
       body: JSON.stringify(newStudent),
     })
       .then((response) => response.json())
-      .then((data) => {
+      .then((data: Student) => {
         setData((prevData) => [...prevData, data]);
         handleCloseModal();
       })
       .catch((error) => {
         console.error("Error adding data:", error);
       });
-    handleCloseModal();
-    setName("");
-    setSex("");
-    setDateOfBirth("");
-    setGroup("");
   };
-  const handleEditClick = (row) => {
+
+  const handleEditClick = (row: Student) => {
     setEditRowId(row.id);
     setName(row.name);
     setSex(row.sex);
@@ -208,11 +222,12 @@ function Table() {
     setGroup(row.groups);
     setOpenEditModal(true);
   };
-  const handleEditSubmit = (event) => {
+
+  const handleEditSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    const editedStudent = {
-      id: editRowId,
+    const editedStudent: Student = {
+      id: editRowId!,
       name,
       sex,
       dob: dateOfBirth,
@@ -227,19 +242,18 @@ function Table() {
       body: JSON.stringify(editedStudent),
     })
       .then((response) => response.json())
-      .then((data) => {
+      .then((data: Student) => {
         setData((prevData) =>
           prevData.map((row) => (row.id === editedStudent.id ? data : row))
         );
         handleCloseModal();
       })
       .catch((error) => {
-        console.error("Error upda ting data:", error);
+        console.error("Error updating data:", error);
       });
 
     handleCloseEditModal();
   };
-
   return (
     <Box>
       <Box
