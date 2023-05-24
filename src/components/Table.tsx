@@ -1,4 +1,8 @@
-import React, { ChangeEvent, FormEvent } from "react";
+import React from "react";
+import AddModal from "./AddModal";
+import EditModal from "./EditModal";
+import ConfirmationModal from "./ConfirmationModal";
+
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import { DataGrid, GridToolbar } from "@mui/x-data-grid";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -47,7 +51,7 @@ const theme = createTheme({
     },
   },
 });
-interface Student {
+export interface Student {
   id: number;
   name: string;
   sex: string;
@@ -56,21 +60,26 @@ interface Student {
 }
 
 function Table() {
+  const [isAddModalOpen, setIsAddModalOpen] = React.useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = React.useState(false);
+  const [isConfirmationModalOpen, setIsConfirmationModalOpen] =
+    React.useState(false);
   const [data, setData] = React.useState<Student[]>([]);
   const [filteredData, setFilteredData] = React.useState<Student[]>([]);
   const [selectedRow, setSelectedRow] = React.useState<Student | null>(null);
-  const [openConfirmation, setOpenConfirmation] = React.useState(false);
+
   const [searchText, setSearchText] = React.useState("");
   const [selectedGroups, setSelectedGroups] = React.useState<string[]>([]);
-  const [openModal, setOpenModal] = React.useState(false);
-  const [openEditModal, setOpenEditModal] = React.useState(false);
-  const [name, setName] = React.useState("");
-  const [sex, setSex] = React.useState("");
-  const [dateOfBirth, setDateOfBirth] = React.useState("");
-  const [group, setGroup] = React.useState("");
+
+  const [formData, setFormData] = React.useState({
+    name: "",
+    sex: "",
+    dateOfBirth: "",
+    group: "",
+  });
   const [editRowId, setEditRowId] = React.useState<number | null>(null);
 
-  const handleGroupChange = (event: ChangeEvent<HTMLInputElement>) => {
+  const handleGroupChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const groupName = event.target.value;
     if (event.target.checked) {
       setSelectedGroups((prevGroups) => [...prevGroups, groupName]);
@@ -99,29 +108,26 @@ function Table() {
     setFilteredData(filteredRows);
   }, [data, searchText, selectedGroups]);
 
-  const handleSearch = (event: ChangeEvent<HTMLInputElement>) => {
+  const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchText(event.target.value);
   };
 
-  const handleDeleteClick = (row: Student) => {
-    setSelectedRow(row);
-    setOpenConfirmation(true);
-  };
-
   const handleDeleteConfirm = () => {
-    fetch(`http://localhost:3001/users/${selectedRow!.id}`, {
-      method: "DELETE",
-    })
-      .then(() => {
-        setData((prevData) =>
-          prevData.filter((row) => row.id !== selectedRow!.id)
-        );
-        setSelectedRow(null);
-        setOpenConfirmation(false);
+    if (selectedRow && selectedRow.id) {
+      fetch(`http://localhost:3001/users/${selectedRow.id}`, {
+        method: "DELETE",
       })
-      .catch((error) => {
-        console.error("Error deleting data:", error);
-      });
+        .then(() => {
+          setData((prevData) =>
+            prevData.filter((row) => row.id !== selectedRow.id)
+          );
+          setSelectedRow(null);
+          setIsConfirmationModalOpen(false);
+        })
+        .catch((error) => {
+          console.error("Error deleting data:", error);
+        });
+    }
   };
 
   const columns = [
@@ -145,7 +151,7 @@ function Table() {
       renderCell: (params: { row: Student }) => (
         <DeleteIcon
           style={{ color: "red", cursor: "pointer" }}
-          onClick={() => handleDeleteClick(params.row)}
+          onClick={() => openConfirmationModal()}
         />
       ),
     },
@@ -156,45 +162,43 @@ function Table() {
       renderCell: (params: { row: Student }) => (
         <EditIcon
           style={{ color: "blue", cursor: "pointer" }}
-          onClick={() => handleEditClick(params.row)}
+          onClick={() => openEditModal()}
         />
       ),
     },
   ];
-
-  const handleCloseEditModal = () => {
-    setOpenEditModal(false);
-    setName("");
-    setSex("");
-    setDateOfBirth("");
-    setGroup("");
+  const openAddModal = () => {
+    setIsAddModalOpen(true);
   };
 
-  const handleOpenEditModal = () => {
-    setOpenEditModal(true);
+  const closeAddModal = () => {
+    setIsAddModalOpen(false);
   };
 
-  const handleOpenModal = () => {
-    setOpenModal(true);
+  const openEditModal = () => {
+    setIsEditModalOpen(true);
   };
 
-  const handleCloseModal = () => {
-    setOpenModal(false);
-    setName("");
-    setSex("");
-    setDateOfBirth("");
-    setGroup("");
+  const closeEditModal = () => {
+    setIsEditModalOpen(false);
   };
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const openConfirmationModal = () => {
+    setIsConfirmationModalOpen(true);
+  };
+
+  const closeConfirmationModal = () => {
+    setIsConfirmationModalOpen(false);
+  };
+
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-
-    const newStudent: Student = {
+    const newStudent = {
       id: Math.random(),
-      name,
-      sex,
-      dob: dateOfBirth,
-      groups: group,
+      name: formData.name,
+      sex: formData.sex,
+      dob: formData.dateOfBirth,
+      groups: formData.group,
     };
 
     fetch("http://localhost:3001/users", {
@@ -207,31 +211,22 @@ function Table() {
       .then((response) => response.json())
       .then((data: Student) => {
         setData((prevData) => [...prevData, data]);
-        handleCloseModal();
+        closeAddModal();
       })
       .catch((error) => {
         console.error("Error adding data:", error);
       });
   };
 
-  const handleEditClick = (row: Student) => {
-    setEditRowId(row.id);
-    setName(row.name);
-    setSex(row.sex);
-    setDateOfBirth(row.dob);
-    setGroup(row.groups);
-    setOpenEditModal(true);
-  };
-
-  const handleEditSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleEditSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     const editedStudent: Student = {
       id: editRowId!,
-      name,
-      sex,
-      dob: dateOfBirth,
-      groups: group,
+      name: formData.name,
+      sex: formData.sex,
+      dob: formData.dateOfBirth,
+      groups: formData.group,
     };
 
     fetch(`http://localhost:3001/users/${editedStudent.id}`, {
@@ -246,13 +241,13 @@ function Table() {
         setData((prevData) =>
           prevData.map((row) => (row.id === editedStudent.id ? data : row))
         );
-        handleCloseModal();
+        closeEditModal();
       })
       .catch((error) => {
         console.error("Error updating data:", error);
       });
 
-    handleCloseEditModal();
+    closeEditModal();
   };
   return (
     <Box>
@@ -298,91 +293,16 @@ function Table() {
             Delete
           </Button>
 
-          <Button variant="contained" onClick={handleOpenModal}>
+          <Button variant="contained" onClick={openAddModal}>
             <AddIcon />
             Add New
           </Button>
           <Box>
-            <Modal open={openModal} onClose={handleCloseModal}>
-              <Box
-                sx={{
-                  position: "absolute",
-                  top: "50%",
-                  left: "50%",
-                  transform: "translate(-50%, -50%)",
-                  bgcolor: "background.paper",
-                  boxShadow: 24,
-                  p: 4,
-                  minWidth: 300,
-                }}
-              >
-                <Typography variant="h5" component="h2">
-                  Add New Student
-                </Typography>
-                <form onSubmit={handleSubmit}>
-                  <TextField
-                    sx={{ marginBottom: "10px" }}
-                    required
-                    fullWidth
-                    label="Name"
-                    type="text"
-                    value={name || ""}
-                    onChange={(event) => setName(event.target.value)}
-                  />
-                  <FormControl sx={{ marginBottom: "10px" }} required fullWidth>
-                    <InputLabel>Sex</InputLabel>
-                    <Select
-                      value={sex}
-                      onChange={(event) => setSex(event.target.value)}
-                    >
-                      <MenuItem value="male">Male</MenuItem>
-                      <MenuItem value="female">Female</MenuItem>
-                      <MenuItem value="other">Other</MenuItem>
-                    </Select>
-                  </FormControl>
-                  <TextField
-                    sx={{ marginBottom: "10px" }}
-                    required
-                    fullWidth
-                    // label="Date of Birth"
-                    type="date"
-                    value={dateOfBirth}
-                    onChange={(event) => setDateOfBirth(event.target.value)}
-                  />
-                  <FormControl sx={{ marginBottom: "10px" }} required fullWidth>
-                    <InputLabel>Group</InputLabel>
-                    <Select
-                      value={group}
-                      onChange={(event) => setGroup(event.target.value)}
-                    >
-                      <MenuItem value="Typography">Typography</MenuItem>
-                      <MenuItem value="Biologists">Biologists</MenuItem>
-                      <MenuItem value="Chemistry Capital">
-                        Chemistry Capital{" "}
-                      </MenuItem>
-                      <MenuItem value="Web designers">Web designers</MenuItem>
-                      <MenuItem value="Black magicians">
-                        Black magicians
-                      </MenuItem>
-                      <MenuItem value="Lame gamer boys">
-                        Lame gamer boys
-                      </MenuItem>
-                    </Select>
-                  </FormControl>
-
-                  <Box
-                    sx={{ display: "flex", justifyContent: "flex-end", mt: 2 }}
-                  >
-                    <Button type="submit" variant="contained" sx={{ mr: 1 }}>
-                      Save
-                    </Button>
-                    <Button onClick={handleCloseModal} variant="outlined">
-                      Cancel
-                    </Button>
-                  </Box>
-                </form>
-              </Box>
-            </Modal>
+            <AddModal
+              open={isAddModalOpen}
+              onClose={closeAddModal}
+              handleSubmit={handleSubmit}
+            />
           </Box>
         </Stack>
       </Box>
@@ -472,101 +392,17 @@ function Table() {
               }}
             />
           </ThemeProvider>
-          <Dialog
-            open={openConfirmation}
-            onClose={() => setOpenConfirmation(false)}
-          >
-            <DialogTitle>{"Delete Row?"}</DialogTitle>
-            <DialogContent>
-              Are you sure you want to delete this row?
-            </DialogContent>
-            <DialogActions>
-              <Button onClick={() => setOpenConfirmation(false)}>Cancel</Button>
-              <Button onClick={handleDeleteConfirm} color="error">
-                Delete
-              </Button>
-            </DialogActions>
-          </Dialog>
-          <Modal open={openEditModal} onClose={handleCloseEditModal}>
-            <Box
-              sx={{
-                position: "absolute",
-                top: "50%",
-                left: "50%",
-                transform: "translate(-50%, -50%)",
-                bgcolor: "background.paper",
-                boxShadow: 24,
-                p: 4,
-                minWidth: 300,
-              }}
-            >
-              <Typography variant="h5" component="h2">
-                Edit Student
-              </Typography>
-              <form onSubmit={handleEditSubmit}>
-                <TextField
-                  sx={{ marginBottom: "10px" }}
-                  required
-                  fullWidth
-                  label="Name"
-                  type="text"
-                  value={name}
-                  onChange={(event) => setName(event.target.value)}
-                />
-                <FormControl sx={{ marginBottom: "10px" }} required fullWidth>
-                  <InputLabel>Sex</InputLabel>
-                  <Select
-                    value={sex}
-                    onChange={(event) => setSex(event.target.value)}
-                  >
-                    <MenuItem value="male">Male</MenuItem>
-                    <MenuItem value="female">Female</MenuItem>
-                    <MenuItem value="other">Other</MenuItem>
-                  </Select>
-                </FormControl>
-                <TextField
-                  sx={{ marginBottom: "10px" }}
-                  required
-                  fullWidth
-                  type="date"
-                  value={dateOfBirth}
-                  onChange={(event) => setDateOfBirth(event.target.value)}
-                />
-                <FormControl sx={{ marginBottom: "10px" }} required fullWidth>
-                  <InputLabel>Group</InputLabel>
-                  <Select
-                    value={group}
-                    onChange={(event) => setGroup(event.target.value)}
-                  >
-                    <MenuItem value="Ty pography">Typography</MenuItem>
-                    <MenuItem value="Biologists">Biologists</MenuItem>
-                    <MenuItem value="Chemistry Capital">
-                      Chemistry Capital{" "}
-                    </MenuItem>
-                    <MenuItem value="Web designers">Web designers</MenuItem>
-                    <MenuItem value="Black magicians">Black magicians</MenuItem>
-                    <MenuItem value="Lame gamer boys">Lame gamer boys</MenuItem>
-                  </Select>
-                </FormControl>
-
-                <Box
-                  sx={{ display: "flex", justifyContent: "flex-end", mt: 2 }}
-                >
-                  <Button
-                    onClick={handleOpenEditModal}
-                    type="submit"
-                    variant="contained"
-                    sx={{ mr: 1 }}
-                  >
-                    Update
-                  </Button>
-                  <Button onClick={handleCloseEditModal} variant="outlined">
-                    Cancel
-                  </Button>
-                </Box>
-              </form>
-            </Box>
-          </Modal>
+          <ConfirmationModal
+            open={isConfirmationModalOpen}
+            onClose={closeConfirmationModal}
+            handleConfirm={handleDeleteConfirm}
+          />
+          <EditModal
+            open={isEditModalOpen}
+            onClose={closeEditModal}
+            handleSubmit={handleEditSubmit}
+            row={selectedRow}
+          />
         </div>
       </Box>
     </Box>
