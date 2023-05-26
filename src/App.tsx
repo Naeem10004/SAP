@@ -1,17 +1,20 @@
 import React from "react";
-import Navbar from "./components/Navbar";
+import Navbar from "./components/navbar/Navbar";
+import { QueryClient, QueryClientProvider } from "react-query";
 import { Box } from "@mui/material";
 
-import Table from "./components/Table";
-
+import StudentsPage from "./components/StudentsPage/StudentsPage";
+const queryClient = new QueryClient();
 function App() {
   return (
-    <Box>
-      <Navbar />
-      <Box sx={{ display: "flex" }}>
-        <Table />
+    <QueryClientProvider client={queryClient}>
+      <Box>
+        <Navbar />
+        <Box sx={{ display: "flex" }}>
+          <StudentsPage />
+        </Box>
       </Box>
-    </Box>
+    </QueryClientProvider>
   );
 }
 
