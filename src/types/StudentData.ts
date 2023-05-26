@@ -1,5 +1,5 @@
 export type StudentData = {
-  id: string;
+  _id: string;
   name: string;
   sex: string;
   dateOfBirth: string;

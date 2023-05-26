@@ -24,7 +24,7 @@ function StudentsPage() {
   const [filteredStudents, setFilteredStudents] = useState<StudentData[]>([]);
   const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
   const [modalData, setModalData] = useState<StudentData>({
-    id: "",
+    _id: "",
     name: "",
     sex: "",
     dateOfBirth: "",
@@ -40,7 +40,7 @@ function StudentsPage() {
   const handleAdd = () => {
     setModalTitle("Add Student");
     setModalData({
-      id: "",
+      _id: "",
       name: "",
       sex: "",
       dateOfBirth: "",

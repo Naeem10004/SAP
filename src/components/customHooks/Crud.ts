@@ -1,12 +1,12 @@
 import { useQuery, useMutation } from "react-query";
 import axios from "axios";
 import { StudentData } from "../../types/StudentData";
+
+const backendUrl = "http://localhost:5000"; // Update with your backend server URL
+
 export function useAddStudent() {
   return useMutation(async (newStudent: StudentData) => {
-    const response = await axios.post(
-      "http://localhost:3001/users",
-      newStudent
-    );
+    const response = await axios.post(`${backendUrl}/users`, newStudent);
     return response.data;
   });
 }
@@ -14,7 +14,7 @@ export function useAddStudent() {
 export function useUpdateStudent() {
   return useMutation(async (student: StudentData) => {
     const response = await axios.put(
-      `http://localhost:3001/users/${student.id}`,
+      `${backendUrl}/users/${student._id}`,
       student
     );
     return response.data;
@@ -23,13 +23,13 @@ export function useUpdateStudent() {
 
 export function useDeleteStudent() {
   return useMutation(async (studentId: string) => {
-    await axios.delete(`http://localhost:3001/users/${studentId}`);
+    await axios.delete(`${backendUrl}/users/${studentId}`);
   });
 }
 
 export function useStudents() {
   return useQuery("students", async () => {
-    const response = await axios.get("http://localhost:3001/users");
+    const response = await axios.get(`${backendUrl}/users`);
     return response.data;
   });
 }

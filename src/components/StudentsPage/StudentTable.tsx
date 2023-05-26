@@ -14,7 +14,7 @@ const StudentTable: React.FC<StudentTableProps> = ({
   handleEdit,
 }) => {
   const columns: GridColDef[] = [
-    { field: "id", headerName: "ID", width: 70 },
+    { field: "_id", headerName: "ID", width: 70 },
     { field: "name", headerName: "Name", width: 150 },
     { field: "sex", headerName: "Sex", width: 100 },
     {
@@ -42,7 +42,7 @@ const StudentTable: React.FC<StudentTableProps> = ({
   ];
 
   const rows = students.map((student) => ({
-    id: student.id,
+    id: student._id,
     name: student.name,
     sex: student.sex,
     dateOfBirth: student.dateOfBirth,
