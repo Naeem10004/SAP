@@ -1,0 +1,11 @@
+{
+  "users": [
+    {
+      "name": "naeem",
+      "sex": "male",
+      "dateOfBirth": "2023-05-03",
+      "group": "Biologists",
+      "id": 1
+    }
+  ]
+}
