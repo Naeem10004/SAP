@@ -1,15 +1,13 @@
-import {
-  Avatar,
-  AppBar,
-  Box,
-  Button,
-  Toolbar,
-  Typography,
-} from "@mui/material";
-import { KeyboardArrowDown } from "@mui/icons-material";
 import React from "react";
+import { AppBar, Box, Button, Toolbar, Typography } from "@mui/material";
+import { ExitToApp } from "@mui/icons-material";
 
-function Navbar() {
+type NavbarProps = {
+  isLoggedIn: boolean;
+  onLogout: () => void;
+};
+
+function Navbar({ isLoggedIn, onLogout }: NavbarProps) {
   return (
     <Box sx={{ flexGrow: 1, bgcolor: "whitesmoke" }}>
       <AppBar position="static" sx={{ bgcolor: "#d4e3e6", height: "100px" }}>
@@ -33,11 +31,11 @@ function Navbar() {
           </Box>
 
           <Box display={"flex"}>
-            <Avatar alt="Remy Sharp" src="/static/images/avatar/1.jpg" />
-            <Button sx={{ color: "Black" }}>
-              Adam
-              <KeyboardArrowDown />
-            </Button>
+            {isLoggedIn && (
+              <Button sx={{ color: "Black" }} onClick={onLogout}>
+                <ExitToApp />
+              </Button>
+            )}
           </Box>
         </Toolbar>
       </AppBar>

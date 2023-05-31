@@ -1,14 +1,12 @@
 // Student.js
 
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const studentSchema = new mongoose.Schema({
-  name: String,
-  sex: String,
-  date: { type: Date },
-  group: String,
+  name: { type: String, required: true },
+  sex: { type: String, required: true },
+  dateOfBirth: { type: String, required: true },
+  group: { type: String, required: true },
 });
 
-const Student = mongoose.model("Student", studentSchema);
-
-module.exports = Student;
+export const Student = mongoose.model("Student", studentSchema);

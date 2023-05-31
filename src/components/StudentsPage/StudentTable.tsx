@@ -14,7 +14,7 @@ const StudentTable: React.FC<StudentTableProps> = ({
   handleEdit,
 }) => {
   const columns: GridColDef[] = [
-    { field: "_id", headerName: "ID", width: 70 },
+    { field: "id", headerName: "ID", width: 70 },
     { field: "name", headerName: "Name", width: 150 },
     { field: "sex", headerName: "Sex", width: 100 },
     {
